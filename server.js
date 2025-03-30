@@ -26,13 +26,26 @@ app.post("/students", (req, res) => {
 });
 
 
-app.put("/students/:id", (req, res) => {
-  const { name, email, age } = req.body;
-  const sql = "UPDATE students SET name=?, email=?, age=? WHERE id=?";
-  db.query(sql, [name, email, age, req.params.id], (err, result) => {
-    if (err) return res.status(500).send(err);
-    res.json({ message: "Student updated successfully" });
-  });
+app.put('/students/:id', async (req, res) => {
+  const { id } = req.params;
+  const { name, age } = req.body;
+
+  if (!name || !age) {
+      return res.status(400).json({ error: 'Thiếu thông tin' });
+  }
+
+  try {
+      const [result] = await db.execute('UPDATE students SET name = ?, age = ? WHERE id = ?', [name, age, id]);
+
+      if (result.affectedRows === 0) {
+          return res.status(404).json({ error: 'Không tìm thấy sinh viên' });
+      }
+
+      res.json({ message: 'Cập nhật thành công' });
+  } catch (error) {
+      console.error('Lỗi khi cập nhật sinh viên:', error);
+      res.status(500).json({ error: 'Lỗi server' });
+  }
 });
 
 
